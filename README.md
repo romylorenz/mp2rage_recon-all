@@ -18,7 +18,6 @@ mp2rage_recon-all.py --fs_dir freesurfer \
 own code:
 * mp2rage_recon-all.py
 * anatomy.py
-* cat12_seg.m
 * run_gdc.sh
 
 external software:
