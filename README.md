@@ -24,7 +24,7 @@ own code:
 external software:
 * freesurfer 7.1
 * spm
-* cat12 (regarding spm+cat12 with MCR see https://github.com/ReproNim/neurodocker/issues/510) 
+* cat12
 * matlab
 * gradient_unwarp.py (https://github.com/Washington-University/gradunwarp, optional)
 * fsl (imcp, convertwarp, applywarp)
