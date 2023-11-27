@@ -1,0 +1,7 @@
+tmp
+*.simg
+*.sif
+*.tar
+data/
+__pycache__/
+license.txt

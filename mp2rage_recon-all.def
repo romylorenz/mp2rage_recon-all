@@ -1,0 +1,177 @@
+Bootstrap: docker
+From: centos:7
+
+%files
+        # Freesurfer
+        license.txt /
+
+        # mp2rage_recon-all
+        code/* /opt/mp2rage_recon-all/
+        
+%environment
+        # CAT12 SPM12
+        export SPM_HOME=/opt/spm12
+        export MCR_HOME=/opt/mcr/v93
+        export MCR_INHIBIT_CTF_LOCK=1
+        export SPM_HTML_BROWSER=0
+
+        # CONDA
+        export CONDA_DIR=/opt/conda
+        export PATH=/opt/conda/bin:$PATH
+        export PROMPT_COMMAND='. /opt/conda/etc/profile.d/conda.sh; . /opt/conda/etc/profile.d/mamba.sh; conda activate base; unset PROMPT_COMMAND'
+
+        # FSL
+        export FSLDIR=/opt/fsl
+        export PATH=$FSLDIR/bin/:$PATH
+        source $FSLDIR/etc/fslconf/fsl.sh
+
+        # Freesurfer
+        export FREESURFER_HOME=/opt/freesurfer
+        export SUBJECTS_DIR=$FREESURFER_HOME/subjects
+        source $FREESURFER_HOME/SetUpFreeSurfer.sh
+        export XDG_RUNTIME_DIR=/tmp/.run_$(uuidgen)
+
+        # TCL/TK (for FSL, reset by Freesurfer)
+        export FSLWISH=/usr/bin/wish
+        export FSLTCLSH=/usr/bin/tclsh
+
+        # mp2rage_recon-all
+        export PATH=/opt/mp2rage_recon-all:$PATH
+    
+%post
+        tmp=$(mktemp -d)
+        
+        yum -y update
+        yum install -y -q \
+            epel-release \
+            which \
+            wget \
+            ca-certificates \
+             unzip \
+            git \
+            nano \
+            tree \
+            bc
+
+        # FSL 6.0.7.1
+        yum install -y -q \
+            bc \
+            bzip2 \
+            dc \
+            curl \
+            file \
+            gtk2 \
+            libGL \
+            libGLU \
+            libICE \
+            libSM \
+            libX11 \
+            libXcursor \
+            libXext \
+            libXft \
+            libXinerama \
+            libXrandr \
+            libXt \
+            libgomp \
+            libjpeg \
+            libmng \
+            libpng12 \
+            nano \
+            openblas-serial \
+            glx-utils \
+            mesa-dri-drivers \
+            tcl \
+            tk \
+            python \
+            wget
+
+        curl -fsSL https://fsl.fmrib.ox.ac.uk/fsldownloads/fslconda/releases/fslinstaller.py | \
+             python - -d /opt/fsl -V 6.0.7.1
+
+        # update fsleyes
+        export FSLDIR=/opt/fsl
+        export PATH=$FSLDIR/bin/:$PATH
+        source $FSLDIR/etc/fslconf/fsl.sh
+        /opt/fsl/share/fsl/bin/update_fsl_package -y -u fsleyes
+
+
+        # Mambaforge
+        export PATH=/opt/conda/bin:$PATH
+        wget https://github.com/conda-forge/miniforge/releases/download/23.3.1-1/Mambaforge-23.3.1-1-Linux-x86_64.sh -P ${tmp}
+        bash ${tmp}/Mambaforge-23.3.1-1-Linux-x86_64.sh -b -p /opt/conda
+        mamba update -yq -nbase conda
+        conda config --system --set auto_update_conda false
+        conda config --system --set show_channel_urls true
+        # install
+        mamba install -y  --name base \
+           "python=3.11" \
+           "nipype" \
+           "notebook" \
+           "numpy" \
+           "scipy" \
+           "nibabel"
+
+        # gradunwarp   
+        yum install -y -q \
+            gcc      
+        yum clean all
+        git clone https://github.com/Washington-University/gradunwarp.git ${tmp}/gradunwarp
+        python -m pip install --no-cache-dir -r ${tmp}/gradunwarp/requirements.txt &&
+        python -m pip install --no-cache-dir ${tmp}/gradunwarp
+
+        # Clean up
+        sync && mamba clean --all --yes && sync
+        rm -rf ~/.cache/pip/*
+
+
+        # Matlab Runtime
+        yum install -y -q \
+            libXext.x86_64 \
+            libXmu \
+            libXpm \
+            libXt.x86_64 \
+            java-1.8.0-openjdk \
+            dbus-x11
+
+        mkdir -p opt/mcr
+        wget https://ssd.mathworks.com/supportfiles/downloads/R2017b/deployment_files/R2017b/installers/glnxa64/MCR_R2017b_glnxa64_installer.zip -P ${tmp}
+        unzip -q ${tmp}/MCR_R2017b_glnxa64_installer.zip -d ${tmp}
+        ${tmp}/install -mode silent -agreeToLicense yes -destinationFolder /opt/mcr
+        
+        # SPM12 with CAT12
+        wget https://www.neuro.uni-jena.de/cat12/CAT12.8.2_r2166_R2017b_MCR_Linux.zip -P ${tmp}
+        unzip -q ${tmp}/CAT12.8.2_r2166_R2017b_MCR_Linux.zip -d ${tmp}
+        mv ${tmp}/CAT12.8.2_r2166_R2017b_MCR_Linux /opt/spm12
+        chmod +x /opt/spm12/run_spm12.sh /opt/spm12/spm12 
+        # test call (to build spm12.ctf while we have write permissions)
+        /opt/spm12/run_spm12.sh /opt/mcr/v93 function exit
+        # set up single spm executable
+        printf '#!/bin/bash\n/opt/spm12/run_spm12.sh /opt/mcr/v93 "$@"' > \
+               /opt/spm12/spm12_mcr/bin/spm12
+        chmod +x /opt/spm12/spm12_mcr/bin/spm12
+        ln -s /opt/spm12/spm12_mcr/bin/spm12 /usr/local/bin/spm12
+
+        # Freesurfer 7.4.1
+        yum install -y -q \
+            glx-utils \
+            mesa-dri-drivers
+        wget https://surfer.nmr.mgh.harvard.edu/pub/dist/freesurfer/7.4.1/freesurfer-CentOS7-7.4.1-1.x86_64.rpm -P ${tmp}
+        yum -y --nogpgcheck localinstall ${tmp}/freesurfer-CentOS7-7.4.1-1.x86_64.rpm
+        ln -s /usr/local/freesurfer/7.4.1-1/ /opt/freesurfer 
+        yum clean all
+        mv /license.txt /opt/freesurfer/
+        chmod a+r /opt/freesurfer/license.txt
+
+        # set permissions on copied code directory
+        chmod -R 755 /opt/mp2rage_recon-all       
+
+        # Clean up
+        yum clean all
+        rm -rf /var/cache/yum/*        
+        rm -rf ${tmp}
+
+%runscript
+        . /opt/conda/etc/profile.d/conda.sh
+        . /opt/conda/etc/profile.d/mamba.sh
+        conda activate base
+        /opt/mp2rage_recon-all/mp2rage_recon-all.py "$@"
