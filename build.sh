@@ -1,8 +1,8 @@
 #!/bin/bash
 shopt -s extglob
 
-export SINGULARITY_TMPDIR=/tmp
-export SINGULARITY_CACHEDIR=/tmp
+export APPTAINER_TMPDIR=/tmp
+export APPTAINER_CACHEDIR=/tmp
 
 deffile=${1-gfae.def}
 container_fname=$(basename $deffile .def).sif
