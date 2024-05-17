@@ -7,7 +7,7 @@ From: centos:7
 
         # mp2rage_recon-all
         code/* /opt/mp2rage_recon-all/
-        
+
 %environment
         # CAT12 SPM12
         export SPM_HOME=/opt/spm12
@@ -86,13 +86,7 @@ From: centos:7
             wget
 
         curl -fsSL https://fsl.fmrib.ox.ac.uk/fsldownloads/fslconda/releases/fslinstaller.py | \
-             python - -d /opt/fsl -V 6.0.7.1
-
-        # update fsleyes
-        export FSLDIR=/opt/fsl
-        export PATH=$FSLDIR/bin/:$PATH
-        source $FSLDIR/etc/fslconf/fsl.sh
-        /opt/fsl/share/fsl/bin/update_fsl_package -y -u fsleyes
+             python - -d /opt/fsl -V 6.0.7.7
 
 
         # Mambaforge
