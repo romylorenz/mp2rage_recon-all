@@ -55,7 +55,7 @@ def mprageize(inv2_file, uni_file, out_file=None):
     
     # bias correct INV2
     seg = spm.NewSegment()
-    seg.inputs.channel_files = os.path.basename(inv2_file)
+    seg.inputs.channel_files = inv2_file
     seg.inputs.channel_info = (0.001, 30, (False, True))
     tissue1 = ((os.path.join(spm_path,'tpm','TPM.nii'), 1), 2, (False,False), (False, False))
     tissue2 = ((os.path.join(spm_path,'tpm','TPM.nii'), 2), 2, (False,False), (False, False))
@@ -105,6 +105,7 @@ def cat12_seg(in_file):
     cat12_segment.inputs.jacobianwarped = False
     cat12_segment.inputs.label_warped = False
     cat12_segment.inputs.las_warped = False
+    cat12_segment.inputs.save_bias_corrected = False
     cat12_segment.inputs.warps = (0, 0)
     cat12_segment.inputs.output_labelnative = True
     cat12_segment.run() 
