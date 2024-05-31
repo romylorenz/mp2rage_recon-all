@@ -5,3 +5,4 @@ tmp
 data/
 __pycache__/
 license.txt
+env/
