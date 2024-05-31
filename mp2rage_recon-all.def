@@ -6,7 +6,7 @@ From: rockylinux:8
         license.txt /
 
         # mp2rage_recon-all
-        code/* /opt/mp2rage_recon-all/
+        # code/* /opt/mp2rage_recon-all/
 
 %environment
         # CAT12 SPM12
@@ -36,7 +36,7 @@ From: rockylinux:8
         export FSLTCLSH=/usr/bin/tclsh
 
         # mp2rage_recon-all
-        export PATH=/opt/mp2rage_recon-all:$PATH
+        # export PATH=/opt/mp2rage_recon-all:$PATH
     
 %post
         tmp=$(mktemp -d)
@@ -47,7 +47,7 @@ From: rockylinux:8
             which \
             wget \
             ca-certificates \
-             unzip \
+            unzip \
             git \
             nano \
             tree \
@@ -84,7 +84,7 @@ From: rockylinux:8
             tk \
             python3 \
             wget
-
+        
         alternatives --set python /usr/bin/python3
 
         curl -fsSL https://fsl.fmrib.ox.ac.uk/fsldownloads/fslconda/releases/fslinstaller.py | \
@@ -95,12 +95,12 @@ From: rockylinux:8
         export PATH=/opt/conda/bin:$PATH
         wget https://github.com/conda-forge/miniforge/releases/download/23.3.1-1/Mambaforge-23.3.1-1-Linux-x86_64.sh -P ${tmp}
         bash ${tmp}/Mambaforge-23.3.1-1-Linux-x86_64.sh -b -p /opt/conda
-        mamba update -yq -nbase conda
+        #mamba update -yq -nbase conda
         conda config --system --set auto_update_conda false
         conda config --system --set show_channel_urls true
         # install
         mamba install -y  --name base \
-           "python=3.11" \
+           "python=3" \
            "nipype" \
            "notebook" \
            "numpy" \
@@ -151,7 +151,8 @@ From: rockylinux:8
         yum install -y -q \
             glx-utils \
             mesa-dri-drivers
-        wget https://surfer.nmr.mgh.harvard.edu/pub/dist/freesurfer/7.4.1/freesurfer-CentOS7-7.4.1-1.x86_64.rpm -P ${tmp}
+        wget https://surfer.nmr.mgh.harvard.edu/pub/dist/freesurfer/7.4.1/freesurfer-CentOS7-7.4.1-1.x86_64.rpm -P ${tmp} \
+            --no-check-certificate
         yum -y --nogpgcheck localinstall ${tmp}/freesurfer-CentOS7-7.4.1-1.x86_64.rpm
         ln -s /usr/local/freesurfer/7.4.1-1/ /opt/freesurfer 
         yum clean all
@@ -159,15 +160,15 @@ From: rockylinux:8
         chmod a+r /opt/freesurfer/license.txt
 
         # set permissions on copied code directory
-        chmod -R 755 /opt/mp2rage_recon-all       
+        # chmod -R 755 /opt/mp2rage_recon-all       
 
         # Clean up
         yum clean all
         rm -rf /var/cache/yum/*        
         rm -rf ${tmp}
 
-%runscript
-        . /opt/conda/etc/profile.d/conda.sh
-        . /opt/conda/etc/profile.d/mamba.sh
-        conda activate base
-        /opt/mp2rage_recon-all/mp2rage_recon-all.py "$@"
+#%runscript
+#        . /opt/conda/etc/profile.d/conda.sh
+#        . /opt/conda/etc/profile.d/mamba.sh
+#        conda activate base
+#        /opt/mp2rage_recon-all/mp2rage_recon-all.py "$@"
