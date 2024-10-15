@@ -203,12 +203,20 @@ def mp2rage_recon_all(inv2_file,uni_file,output_fs_dir=None, gdc_coeff_file=None
     # continue recon-all
     with open(os.path.join(cwd,'expert.opts'), 'w') as text_file:
         text_file.write('mris_inflate -n 100\n')
+    
     # autorecon2 and 3
-    os.system("recon-all" + \
-              " -hires" + \
-              " -autorecon2" + " -autorecon3"\
-              " -sd " + fs_dir + \
-              " -s " + sub + \
-              " -expert " + os.path.join(cwd,'expert.opts') + \
-              " -xopts-overwrite" + \
-              " -parallel")
+    autorecon23_call = "recon-all" + \
+                     " -hires" + \
+                     " -autorecon2" + " -autorecon3"\
+                     " -sd " + fs_dir + \
+                     " -s " + sub + \
+                     " -expert " + os.path.join(cwd,'expert.opts') + \
+                     " -xopts-overwrite" + \
+                     " -parallel "
+                    
+    # deal with freesurfer version 7.3.2 bug:
+    fs_version = subprocess.check_output(['recon-all', '--version']).decode('utf-8').split()[-3]
+    if fs_version == '7.3.2':
+        autorecon23_call = autorecon23_call + " -careg"
+
+    os.system(autorecon23_call)
